@@ -6,9 +6,9 @@ app.use(bodyParser.json());
 app.use(cors());
 
 const users = [
-  { login: "user1", password: "pass1", direction: "programming", state: false, profilePicture: "" },
-  { login: "user2", password: "pass2", direction: "3d_modeling", state: false, profilePicture: "" },
-  { login: "user3", password: "pass3", direction: "journalism", state: false, profilePicture: "" },
+  { login: "user1", password: "pass1", direction: "programming", state: false, profilePicture: "", interests: [] },
+  { login: "user2", password: "pass2", direction: "3d_modeling", state: false, profilePicture: "", interests: [] },
+  { login: "user3", password: "pass3", direction: "journalism", state: false, profilePicture: "", interests: [] },
 ];
 let loggedInUsers = {}; // Хранение токенов и направлений
 
@@ -61,7 +61,7 @@ app.post("/register", (req, res) => {
 
 
   // Создаем нового пользователя и добавляем его в массив
-  const newUser = { login, password, direction, state: false, profilePicture };
+  const newUser = { login, password, direction, state: false, profilePicture, interests: [] };
   users.push(newUser);
 
   // Генерируем токен для нового пользователя и сохраняем его в loggedInUsers
@@ -89,7 +89,7 @@ app.post("/verify-token", (req, res) => {
     if (loggedInUsers[token]) {
         const { direction, login } = loggedInUsers[token];
         const user = users.find(u => u.login === login);
-        return res.json({ success: true, direction, profilePicture: user.profilePicture });
+        return res.json({ success: true, direction, profilePicture: user.profilePicture, interests: user.interests });
     }
     res.status(401).json({ success: false });
 });
@@ -117,6 +117,19 @@ app.post("/get-state", (req, res) => {
   }
   res.status(400).json({ success: false, message: "Ошибка получения состояния" });
 });
+
+// Сохранение интересов
+app.post("/save-interests", (req, res) => {
+    const { token, interests } = req.body;
+    const user = Object.values(loggedInUsers).find((u) => u.login === loggedInUsers[token]?.login);
+  
+    if (user) {
+      const targetUser = users.find((u) => u.login === user.login);
+      targetUser.interests = interests;
+      return res.json({ success: true, message: "Интересы успешно сохранены" });
+    }
+      res.status(400).json({ success: false, message: "Ошибка сохранения интересов" });
+  });
 
 // Выход из аккаунта
 app.post("/logout", (req, res) => {
