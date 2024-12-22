@@ -45,9 +45,9 @@ function generateToken(login) {
 function getRandomProfilePicture(direction) {
     const profilePictures = {
         programming: [
-            "https://api.memory.mts.ru/api/1.0/preview/link/content/_gS0oZvT7E-ehq_BtWUpDA?type=image",
-            "https://api.memory.mts.ru/api/1.0/preview/link/content/he7vcXc5-ZkOKOIhO0Ardwg?type=image",
-            "https://example.com/programming3.png",
+            "https://api.memory.mts.ru/api/1.0/preview/link/content/_gS0oZvT7E-ehq_BtWUpDA",
+            "https://api.memory.mts.ru/api/1.0/preview/link/content/e7vcXc5-ZkOKOIhO0Ardwg",
+            "https://api.memory.mts.ru/api/1.0/preview/link/content/yH5-2qTEAUqeD2eKYdzdJA",
         ],
         "3d_modeling": [
             "https://example.com/3dmodeling1.png",
