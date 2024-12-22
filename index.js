@@ -8,7 +8,7 @@ app.use(cors());
 // Redis Configuration - REMOVED
 // const redis = require("redis");
 // const redisClient = redis.createClient({
-//     socket: {
+//   socket: {
 //         host: "frankfurt-redis.render.com",
 //         port: 6379,
 //     },
