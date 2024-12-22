@@ -8,14 +8,25 @@ app.use(cors());
 
 // Redis Configuration
 const redisClient = redis.createClient({
-    url: "rediss://red-cte0dn5ds78s739gmarg:KtpriKoBKsOPgZy5J2SwEi6KfG9LEeic@frankfurt-redis.render.com:6379"
+    socket: {
+        host: "frankfurt-redis.render.com",
+        port: 6379,
+    },
+    username: "red-cte0dn5ds78s739gmarg",
+    password: "KtpriKoBKsOPgZy5J2SwEi6KfG9LEeic"
 });
 
 
 redisClient.on('error', err => console.log('Redis Client Error', err));
 
 (async () => {
-    await redisClient.connect();
+    try {
+        await redisClient.connect();
+        console.log("Redis client connected successfully");
+    } catch (error) {
+         console.error("Redis connection failed:", error)
+    }
+
 })();
 
 const users = [];
