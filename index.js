@@ -6,9 +6,9 @@ app.use(bodyParser.json());
 app.use(cors());
 
 const users = [
-  { login: "user1", password: "pass1", direction: "programming", state: false, profilePicture: "", interests: [] },
-  { login: "user2", password: "pass2", direction: "3d_modeling", state: false, profilePicture: "", interests: [] },
-  { login: "user3", password: "pass3", direction: "journalism", state: false, profilePicture: "", interests: [] },
+  { login: "user1", password: "pass1", direction: "programming", state: false, profilePicture: "", interests: [], name: "" },
+  { login: "user2", password: "pass2", direction: "3d_modeling", state: false, profilePicture: "", interests: [], name: "" },
+  { login: "user3", password: "pass3", direction: "journalism", state: false, profilePicture: "", interests: [], name: "" },
 ];
 let loggedInUsers = {}; // Хранение токенов и направлений
 
@@ -61,7 +61,7 @@ app.post("/register", (req, res) => {
 
 
   // Создаем нового пользователя и добавляем его в массив
-  const newUser = { login, password, direction, state: false, profilePicture, interests: [] };
+  const newUser = { login, password, direction, state: false, profilePicture, interests: [], name: "" };
   users.push(newUser);
 
   // Генерируем токен для нового пользователя и сохраняем его в loggedInUsers
@@ -78,7 +78,7 @@ app.post("/auth", (req, res) => {
   if (user) {
     const token = generateToken(login);
       loggedInUsers[token] = { login, direction: user.direction };
-    return res.json({ success: true, token, direction: user.direction, profilePicture: user.profilePicture });
+    return res.json({ success: true, token, direction: user.direction, profilePicture: user.profilePicture, interests: user.interests, name: user.name });
   }
   res.status(401).json({ success: false, message: "Неверный логин или пароль" });
 });
@@ -89,7 +89,7 @@ app.post("/verify-token", (req, res) => {
     if (loggedInUsers[token]) {
         const { direction, login } = loggedInUsers[token];
         const user = users.find(u => u.login === login);
-        return res.json({ success: true, direction, profilePicture: user.profilePicture, interests: user.interests });
+        return res.json({ success: true, direction, profilePicture: user.profilePicture, interests: user.interests, name: user.name });
     }
     res.status(401).json({ success: false });
 });
@@ -130,6 +130,20 @@ app.post("/save-interests", (req, res) => {
     }
       res.status(400).json({ success: false, message: "Ошибка сохранения интересов" });
   });
+
+// Сохранение имени
+app.post("/save-name", (req, res) => {
+  const { token, name } = req.body;
+  const user = Object.values(loggedInUsers).find((u) => u.login === loggedInUsers[token]?.login);
+
+  if (user) {
+    const targetUser = users.find((u) => u.login === user.login);
+      targetUser.name = name;
+    return res.json({ success: true, message: "Имя успешно сохранено" });
+  }
+    res.status(400).json({ success: false, message: "Ошибка сохранения имени" });
+});
+
 
 // Выход из аккаунта
 app.post("/logout", (req, res) => {
