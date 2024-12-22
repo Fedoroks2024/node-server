@@ -1,15 +1,24 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const redis = require("redis");
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const users = [
-    { login: "user1", password: "pass1", direction: "programming", state: false, profilePicture: "", interests: [], name: "", history: [] },
-    { login: "user2", password: "pass2", direction: "3d_modeling", state: false, profilePicture: "", interests: [], name: "", history: [] },
-    { login: "user3", password: "pass3", direction: "journalism", state: false, profilePicture: "", interests: [], name: "", history: [] },
-];
+// Redis Configuration
+const redisClient = redis.createClient({
+    url: "rediss://red-cte0dn5ds78s739gmarg:KtpriKoBKsOPgZy5J2SwEi6KfG9LEeic@frankfurt-redis.render.com:6379"
+});
+
+
+redisClient.on('error', err => console.log('Redis Client Error', err));
+
+(async () => {
+    await redisClient.connect();
+})();
+
+const users = [];
 let loggedInUsers = {}; // Хранение токенов и направлений
 
 // Функция для генерации токена
@@ -45,9 +54,38 @@ function getRandomProfilePicture(direction) {
     return picturesForDirection[Math.floor(Math.random() * picturesForDirection.length)]
 }
 
+// Загрузка пользователей из Redis при запуске сервера
+async function loadUsersFromRedis() {
+    try {
+        const keys = await redisClient.keys('user:*');
+        for (const key of keys) {
+           const userString = await redisClient.get(key);
+           const user = JSON.parse(userString);
+           if (user) {
+               users.push(user);
+           }
+        }
+         console.log('Users loaded from Redis:', users);
+    } catch (error) {
+        console.error("Failed to load users from Redis:", error);
+    }
+}
+
+loadUsersFromRedis();
+
+// Сохранение пользователя в Redis
+async function saveUserToRedis(user) {
+    try {
+      await redisClient.set(`user:${user.login}`, JSON.stringify(user));
+      console.log(`User ${user.login} saved to Redis`);
+    } catch (error) {
+      console.error(`Failed to save user ${user.login} to Redis:`, error);
+    }
+}
+
 
 // Регистрация
-app.post("/register", (req, res) => {
+app.post("/register", async (req, res) => {
     const { login, password, direction } = req.body;
 
     // Проверяем, существует ли пользователь с таким логином
@@ -64,6 +102,8 @@ app.post("/register", (req, res) => {
     const newUser = { login, password, direction, state: false, profilePicture, interests: [], name: "", history: [] };
     users.push(newUser);
 
+     // Сохранение пользователя в Redis
+    await saveUserToRedis(newUser);
     // Генерируем токен для нового пользователя и сохраняем его в loggedInUsers
     const token = generateToken(login);
     loggedInUsers[token] = { login, direction };
@@ -72,7 +112,7 @@ app.post("/register", (req, res) => {
 });
 
 // Авторизация
-app.post("/auth", (req, res) => {
+app.post("/auth", async (req, res) => {
     const { login, password } = req.body;
     const user = users.find((u) => u.login === login && u.password === password);
     if (user) {
@@ -95,13 +135,13 @@ app.post("/verify-token", (req, res) => {
 });
 
 // Обновление состояния (нажатие кнопки)
-app.post("/update-state", (req, res) => {
+app.post("/update-state", async (req, res) => {
     const { token } = req.body;
     const user = Object.values(loggedInUsers).find((u) => u.login === loggedInUsers[token]?.login);
     if (user) {
         const targetUser = users.find((u) => u.login === user.login);
         targetUser.state = true;
-        // Обновляем состояние
+        await saveUserToRedis(targetUser);
         return res.json({ success: true });
     }
     res.status(400).json({ success: false, message: "Ошибка обновления состояния" });
@@ -119,26 +159,28 @@ app.post("/get-state", (req, res) => {
 });
 
 // Сохранение интересов
-app.post("/save-interests", (req, res) => {
+app.post("/save-interests", async (req, res) => {
     const { token, interests } = req.body;
     const user = Object.values(loggedInUsers).find((u) => u.login === loggedInUsers[token]?.login);
 
     if (user) {
         const targetUser = users.find((u) => u.login === user.login);
         targetUser.interests = interests;
+        await saveUserToRedis(targetUser);
         return res.json({ success: true, message: "Интересы успешно сохранены" });
     }
     res.status(400).json({ success: false, message: "Ошибка сохранения интересов" });
 });
 
 // Сохранение имени
-app.post("/save-name", (req, res) => {
+app.post("/save-name", async (req, res) => {
     const { token, name } = req.body;
     const user = Object.values(loggedInUsers).find((u) => u.login === loggedInUsers[token]?.login);
 
     if (user) {
         const targetUser = users.find((u) => u.login === user.login);
         targetUser.name = name;
+        await saveUserToRedis(targetUser);
         return res.json({ success: true, message: "Имя успешно сохранено" });
     }
     res.status(400).json({ success: false, message: "Ошибка сохранения имени" });
@@ -146,29 +188,30 @@ app.post("/save-name", (req, res) => {
 
 
 // Сохранение истории
-app.post("/save-history", (req, res) => {
+app.post("/save-history", async (req, res) => {
     const { token, historyItem } = req.body;
     const user = Object.values(loggedInUsers).find((u) => u.login === loggedInUsers[token]?.login);
-  
+
     if (user) {
         const targetUser = users.find((u) => u.login === user.login);
         targetUser.history.push(historyItem);
+         await saveUserToRedis(targetUser);
         return res.json({ success: true, message: "История успешно сохранена" });
     }
-      res.status(400).json({ success: false, message: "Ошибка сохранения истории" });
-  });
+    res.status(400).json({ success: false, message: "Ошибка сохранения истории" });
+});
 
-  // Получение истории
+// Получение истории
 app.post("/get-history", (req, res) => {
     const { token } = req.body;
     const user = Object.values(loggedInUsers).find((u) => u.login === loggedInUsers[token]?.login);
-  
+
     if (user) {
-      const targetUser = users.find((u) => u.login === user.login);
+        const targetUser = users.find((u) => u.login === user.login);
         return res.json({ success: true, history: targetUser.history });
     }
-        res.status(400).json({ success: false, message: "Ошибка получения истории" });
-  });
+    res.status(400).json({ success: false, message: "Ошибка получения истории" });
+});
 
 // Выход из аккаунта
 app.post("/logout", (req, res) => {
