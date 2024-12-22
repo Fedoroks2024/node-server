@@ -1,33 +1,32 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const redis = require("redis");
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-// Redis Configuration
-const redisClient = redis.createClient({
-    socket: {
-        host: "frankfurt-redis.render.com",
-        port: 6379,
-    },
-    username: "red-cte0dn5ds78s739gmarg",
-    password: "KtpriKoBKsOPgZy5J2SwEi6KfG9LEeic"
-});
+// Redis Configuration - REMOVED
+// const redis = require("redis");
+// const redisClient = redis.createClient({
+//     socket: {
+//         host: "frankfurt-redis.render.com",
+//         port: 6379,
+//     },
+//     username: "red-cte0dn5ds78s739gmarg",
+//     password: "KtpriKoBKsOPgZy5J2SwEi6KfG9LEeic"
+// });
 
+// redisClient.on('error', err => console.log('Redis Client Error', err));
 
-redisClient.on('error', err => console.log('Redis Client Error', err));
+// (async () => {
+//     try {
+//         await redisClient.connect();
+//         console.log("Redis client connected successfully");
+//     } catch (error) {
+//          console.error("Redis connection failed:", error)
+//     }
 
-(async () => {
-    try {
-        await redisClient.connect();
-        console.log("Redis client connected successfully");
-    } catch (error) {
-         console.error("Redis connection failed:", error)
-    }
-
-})();
+// })();
 
 const users = [];
 let loggedInUsers = {}; // Хранение токенов и направлений
@@ -65,34 +64,34 @@ function getRandomProfilePicture(direction) {
     return picturesForDirection[Math.floor(Math.random() * picturesForDirection.length)]
 }
 
-// Загрузка пользователей из Redis при запуске сервера
-async function loadUsersFromRedis() {
-    try {
-        const keys = await redisClient.keys('user:*');
-        for (const key of keys) {
-           const userString = await redisClient.get(key);
-           const user = JSON.parse(userString);
-           if (user) {
-               users.push(user);
-           }
-        }
-         console.log('Users loaded from Redis:', users);
-    } catch (error) {
-        console.error("Failed to load users from Redis:", error);
-    }
-}
+// Загрузка пользователей из Redis при запуске сервера - REMOVED
+// async function loadUsersFromRedis() {
+//     try {
+//         const keys = await redisClient.keys('user:*');
+//         for (const key of keys) {
+//            const userString = await redisClient.get(key);
+//            const user = JSON.parse(userString);
+//            if (user) {
+//                users.push(user);
+//            }
+//         }
+//          console.log('Users loaded from Redis:', users);
+//     } catch (error) {
+//         console.error("Failed to load users from Redis:", error);
+//     }
+// }
 
-loadUsersFromRedis();
+// loadUsersFromRedis();
 
-// Сохранение пользователя в Redis
-async function saveUserToRedis(user) {
-    try {
-      await redisClient.set(`user:${user.login}`, JSON.stringify(user));
-      console.log(`User ${user.login} saved to Redis`);
-    } catch (error) {
-      console.error(`Failed to save user ${user.login} to Redis:`, error);
-    }
-}
+// Сохранение пользователя в Redis - REMOVED
+// async function saveUserToRedis(user) {
+//     try {
+//       await redisClient.set(`user:${user.login}`, JSON.stringify(user));
+//       console.log(`User ${user.login} saved to Redis`);
+//     } catch (error) {
+//       console.error(`Failed to save user ${user.login} to Redis:`, error);
+//     }
+// }
 
 
 // Регистрация
@@ -113,8 +112,8 @@ app.post("/register", async (req, res) => {
     const newUser = { login, password, direction, state: false, profilePicture, interests: [], name: "", history: [] };
     users.push(newUser);
 
-     // Сохранение пользователя в Redis
-    await saveUserToRedis(newUser);
+    // Сохранение пользователя в Redis - REMOVED
+    // await saveUserToRedis(newUser);
     // Генерируем токен для нового пользователя и сохраняем его в loggedInUsers
     const token = generateToken(login);
     loggedInUsers[token] = { login, direction };
@@ -152,7 +151,7 @@ app.post("/update-state", async (req, res) => {
     if (user) {
         const targetUser = users.find((u) => u.login === user.login);
         targetUser.state = true;
-        await saveUserToRedis(targetUser);
+        // await saveUserToRedis(targetUser); - REMOVED
         return res.json({ success: true });
     }
     res.status(400).json({ success: false, message: "Ошибка обновления состояния" });
@@ -177,7 +176,7 @@ app.post("/save-interests", async (req, res) => {
     if (user) {
         const targetUser = users.find((u) => u.login === user.login);
         targetUser.interests = interests;
-        await saveUserToRedis(targetUser);
+        // await saveUserToRedis(targetUser); - REMOVED
         return res.json({ success: true, message: "Интересы успешно сохранены" });
     }
     res.status(400).json({ success: false, message: "Ошибка сохранения интересов" });
@@ -191,7 +190,7 @@ app.post("/save-name", async (req, res) => {
     if (user) {
         const targetUser = users.find((u) => u.login === user.login);
         targetUser.name = name;
-        await saveUserToRedis(targetUser);
+        // await saveUserToRedis(targetUser); - REMOVED
         return res.json({ success: true, message: "Имя успешно сохранено" });
     }
     res.status(400).json({ success: false, message: "Ошибка сохранения имени" });
@@ -206,7 +205,7 @@ app.post("/save-history", async (req, res) => {
     if (user) {
         const targetUser = users.find((u) => u.login === user.login);
         targetUser.history.push(historyItem);
-         await saveUserToRedis(targetUser);
+         // await saveUserToRedis(targetUser); - REMOVED
         return res.json({ success: true, message: "История успешно сохранена" });
     }
     res.status(400).json({ success: false, message: "Ошибка сохранения истории" });
