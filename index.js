@@ -71,7 +71,7 @@ function getRandomProfilePicture(direction) {
 //         for (const key of keys) {
 //            const userString = await redisClient.get(key);
 //            const user = JSON.parse(userString);
-//            if (user) {
+//       if (user) {
 //                users.push(user);
 //            }
 //         }
