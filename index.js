@@ -46,7 +46,7 @@ function getRandomProfilePicture(direction) {
     const profilePictures = {
         programming: [
             "https://api.memory.mts.ru/api/1.0/preview/link/content/_gS0oZvT7E-ehq_BtWUpDA?type=image",
-            "https://example.com/programming2.png",
+            "https://api.memory.mts.ru/api/1.0/preview/link/content/he7vcXc5-ZkOKOIhO0Ardwg?type=image",
             "https://example.com/programming3.png",
         ],
         "3d_modeling": [
