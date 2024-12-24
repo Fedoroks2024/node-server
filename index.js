@@ -7,12 +7,7 @@ app.use(cors());
 
 const redis = require("redis");
 const redisClient = redis.createClient({
-    socket: {
-        host: "frankfurt-redis.render.com",
-        port: 6379,
-    },
-    username: "red-cte0dn5ds78s739gmarg", // Replace with your actual Redis username
-    password: "KtpriKoBKsOPgZy5J2SwEi6KfG9LEeic", // Replace with your actual Redis password
+    url("rediss://red-ctk3smqj1k6c73cmgmi0:vshRWsw12Wx9kDdJYye4Uq7gIjjwBFpb@frankfurt-redis.render.com:6379");
 });
 
 redisClient.on('error', err => {
